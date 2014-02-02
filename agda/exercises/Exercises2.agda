@@ -110,18 +110,34 @@ transportconst-left! : ∀ {i j} {A : Type i} (B : Type j) {x y : A} (p : x == y
                        transport (cst B) p (f x) == f y → f x == f y
 transportconst-left! B {x = x} p f q′ = (! (transportconst B p (f x))) ∙ q′
 
-transportconst-equiv₁ : ∀ {i j} {A : Type i} (B : Type j) {x y : A} (p : x == y) (f : A → B)
-                        (q : f x == f y) → 
-                        transportconst-left! B p f (transportconst-left B p f q) == q
-transportconst-equiv₁ B {x = x} p f q =
+tc-left-equiv₁ : ∀ {i j} {A : Type i} (B : Type j) {x y : A} (p : x == y) (f : A → B)
+                 (q : f x == f y) →
+                 transportconst-left! B p f (transportconst-left B p f q) == q
+tc-left-equiv₁ B {x = x} p f q =
   let tc = transportconst B p (f x)
-  in transportconst-left! B p f (transportconst-left B p f q) =⟨ ! (∙-assoc (! tc) tc q) ⟩ 
-     (! tc ∙ tc) ∙ q =⟨ !-inv-l tc |in-ctx (λ p → p ∙ q) ⟩ q ∎
+  in transportconst-left! B p f (transportconst-left B p f q)
+       =⟨ ! (∙-assoc (! tc) tc q) ⟩
+     (! tc ∙ tc) ∙ q
+       =⟨ !-inv-l tc |in-ctx (λ p → p ∙ q) ⟩
+     q ∎
 
-transportconst-equiv₂ : ∀ {i j} {A : Type i} (B : Type j) {x y : A} (p : x == y) (f : A → B)
-                        (q′ : transport (cst B) p (f x) == f y) → 
-                        transportconst-left B p f (transportconst-left! B p f q′) == q′
-transportconst-equiv₂ B {x = x} p f q′ =
+tc-left-equiv₂ : ∀ {i j} {A : Type i} (B : Type j) {x y : A} (p : x == y) (f : A → B)
+                 (q′ : transport (cst B) p (f x) == f y) →
+                 transportconst-left B p f (transportconst-left! B p f q′) == q′
+tc-left-equiv₂ B {x = x} p f q′ =
   let tc = transportconst B p (f x)
-  in transportconst-left B p f (transportconst-left! B p f q′) =⟨ ! (∙-assoc tc (! tc) q′) ⟩ 
-     (tc ∙ ! tc) ∙ q′ =⟨ !-inv-r tc |in-ctx (λ p → p ∙ q′) ⟩ q′ ∎
+  in transportconst-left B p f (transportconst-left! B p f q′)
+       =⟨ ! (∙-assoc tc (! tc) q′) ⟩
+     (tc ∙ ! tc) ∙ q′
+       =⟨ !-inv-r tc |in-ctx (λ p → p ∙ q′) ⟩
+     q′ ∎
+
+tc-left-equiv : ∀ {i j} {A : Type i} (B : Type j) {x y : A} (p : x == y) (f : A → B) →
+                is-equiv (transportconst-left B p f)
+tc-left-equiv B p f = is-eq (transportconst-left B p f) (transportconst-left! B p f)
+                            (tc-left-equiv₂ B p f) (tc-left-equiv₁ B p f)
+
+tc-left!-equiv : ∀ {i j} {A : Type i} (B : Type j) {x y : A} (p : x == y) (f : A → B) →
+                 is-equiv (transportconst-left! B p f)
+tc-left!-equiv B p f = is-eq (transportconst-left! B p f) (transportconst-left B p f)
+                             (tc-left-equiv₁ B p f) (tc-left-equiv₂ B p f)
