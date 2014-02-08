@@ -141,3 +141,52 @@ tc-left!-equiv : ∀ {i j} {A : Type i} (B : Type j) {x y : A} (p : x == y) (f :
                  is-equiv (transportconst-left! B p f)
 tc-left!-equiv B p f = is-eq (transportconst-left! B p f) (transportconst-left B p f)
                              (tc-left-equiv₁ B p f) (tc-left-equiv₂ B p f)
+
+-- 2.6. Prove that if p : x = y, then the function (p ∙ –) : (y = z) → (x = z) is an
+-- equivalence.
+
+∙-left-equiv : ∀ {i} {A : Type i} {x y : A} (p : x == y) → {z : A} →
+               is-equiv (λ (q : y == z) → p ∙ q)
+∙-left-equiv p = is-eq (_∙_ p) (_∙_ (! p)) (∙-left-equiv₂ p) (∙-left-equiv₁ p)
+  where
+    ∙-left-equiv₁ : ∀ {i} {A : Type i} {x y : A} (p : x == y) {z : A} (q : y == z) →
+                    (! p) ∙ (p ∙ q) == q
+    ∙-left-equiv₁ p q = (! p) ∙ (p ∙ q) =⟨ ! (∙-assoc (! p) p q) ⟩
+                        ((! p) ∙ p) ∙ q =⟨ !-inv-l p |in-ctx (λ p → p ∙ q) ⟩
+                        q ∎
+
+    ∙-left-equiv₂ : ∀ {i} {A : Type i} {x y : A} (p : x == y) {z : A} (q : x == z) →
+                    p ∙ ((! p) ∙ q) == q
+    ∙-left-equiv₂ p q = p ∙ ((! p) ∙ q) =⟨ ! (∙-assoc p (! p) q) ⟩
+                        (p ∙ (! p)) ∙ q =⟨ !-inv-r p |in-ctx (λ p → p ∙ q) ⟩
+                        q ∎
+
+-- 2.7. State and prove a generalization of Theorem 2.6.5 from cartesian products to Σ-types.
+
+module _ {i} {A A′ : Type i} {B : A → Type i} {B′ : A′ → Type i} where
+
+  _,→_ : (g : A → A′) → (h : {a : A} → B a → B′ (g a)) → Σ A B → Σ A′ B′
+  _,→_ g h (a , b) = (g a , h b)
+
+  -- This seems to be difficult to get into the right type.  Come back to this later.
+
+  -- ap-Σ : ∀ (g : A → A′) (h : {a : A} → B a → B′ (g a)) (x y : Σ A B)
+  --          (p : fst x == fst y) (q : snd x == snd y [ B ↓ p ]) →
+  --        ap (g ,→ h) (pair= p q) == pair= (ap g p) {!!}
+  -- ap-Σ g h (a , b) (.a , .b) idp idp = {!!}
+
+-- 2.8. State and prove an analogue of Theorem 2.6.5 for coproducts.
+
+module _ {i} {A A′ B B′ : Type i} where
+
+  _+→_ : (g : A → A′) → (h : B → B′) → Coprod A B → Coprod A′ B′
+  _+→_ g _ (inl a) = inl (g a)
+  _+→_ _ h (inr b) = inr (h b)
+
+  ap-coprod : ∀ (g : A → A′) (h : B → B′) {x y : A} (p : x == y) →
+              ap (g +→ h) (ap inl p) == ap (inl ∘ g) p
+  ap-coprod g h idp = idp
+
+  ap-coprod′ : ∀ (g : A → A′) (h : B → B′) {x y : B} (q : x == y) →
+              ap (g +→ h) (ap inr q) == ap (inr ∘ h) q
+  ap-coprod′ g h idp = idp
