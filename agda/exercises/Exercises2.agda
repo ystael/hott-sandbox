@@ -190,3 +190,106 @@ module _ {i} {A A′ B B′ : Type i} where
   ap-coprod′ : ∀ (g : A → A′) (h : B → B′) {x y : B} (q : x == y) →
               ap (g +→ h) (ap inr q) == ap (inr ∘ h) q
   ap-coprod′ g h idp = idp
+
+-- 2.9. Prove that coproducts have the expected universal property,
+-- (A + B → X) ≃ (A → X) × (B → X).
+-- Can you generalize this to an equivalence involving dependent functions?
+
+module _ {i} (A B X : Type i) where
+
+  coprod-universal : (Coprod A B → X) ≃ ((A → X) × (B → X))
+  coprod-universal = (split , is-eq split combine split-combine combine-split)
+    where
+      split : (Coprod A B → X) → ((A → X) × (B → X))
+      split f = (λ a → f (inl a)) , (λ b → f (inr b))
+
+      combine : (A → X) × (B → X) → Coprod A B → X
+      combine (g , h) (inl a) = g a
+      combine (g , h) (inr b) = h b
+
+      split-combine : (gh : (A → X) × (B → X)) → split (combine gh) == gh
+      split-combine (g , h) = pair×= (λ= (split-combine-ext-l g h))
+                                     (λ= (split-combine-ext-r g h))
+        where
+          split-combine-ext-l : (g : A → X) → (h : B → X) → (a : A) →
+                                combine (g , h) (inl a) == g a
+          split-combine-ext-l g h a = idp
+          split-combine-ext-r : (g : A → X) → (h : B → X) → (b : B) →
+                                combine (g , h) (inr b) == h b
+          split-combine-ext-r g h b = idp
+
+      combine-split : (f : Coprod A B → X) → combine (split f) == f
+      combine-split f = λ= (combine-split-ext f)
+        where
+          combine-split-ext : (f : Coprod A B → X) → (ab : Coprod A B) →
+                              combine (split f) ab == f ab
+          combine-split-ext f (inl a) = idp
+          combine-split-ext f (inr b) = idp
+
+module _ {i} (A B : Type i) (C : A → Type i) (D : B → Type i) where
+
+  E : Coprod A B → Type i
+  E (inl a) = C a
+  E (inr b) = D b
+
+  coprod-univ-dep : ((ab : Coprod A B) → E ab) ≃ (((a : A) → C a) × ((b : B) → D b))
+  coprod-univ-dep = (split , is-eq split combine split-combine combine-split)
+    where
+      split : ((ab : Coprod A B) → E ab) → (((a : A) → C a) × ((b : B) → D b))
+      split f = (λ a → f (inl a)) , (λ b → f (inr b))
+
+      combine : (((a : A) → C a) × ((b : B) → D b)) → ((ab : Coprod A B) → E ab)
+      combine (g , h) (inl a) = g a
+      combine (g , h) (inr b) = h b
+
+      split-combine : (gh : ((a : A) → C a) × ((b : B) → D b)) → split (combine gh) == gh
+      split-combine (g , h) = pair×= (λ= (split-combine-ext-l g h))
+                                     (λ= (split-combine-ext-r g h))
+        where
+          split-combine-ext-l : (g : (a : A) → C a) → (h : (b : B) → D b) → (a : A) →
+                                combine (g , h) (inl a) == g a
+          split-combine-ext-l g h a = idp
+          split-combine-ext-r : (g : (a : A) → C a) → (h : (b : B) → D b) → (b : B) →
+                                combine (g , h) (inr b) == h b
+          split-combine-ext-r g h b = idp
+
+      combine-split : (f : (ab : Coprod A B) → E ab) → combine (split f) == f
+      combine-split f = λ= (combine-split-ext f)
+        where
+          combine-split-ext : (f : (ab : Coprod A B) → E ab) → (ab : Coprod A B) →
+                              combine (split f) ab == f ab
+          combine-split-ext f (inl a) = idp
+          combine-split-ext f (inr b) = idp
+
+-- 2.10. Prove that Σ-types are “associative”, in that for any A : U and families B : A → U and
+-- C : (Σx:A. B(x)) → U, we have Σx:A. Σy:B(x). C((x,y)) ≅ Σp:(Σx:A. B(x)). C(p).
+
+module _ {i} (A : Type i) (B : A → Type i) (C : Σ A B → Type i) where
+
+  Σ-assoc : Σ A (λ a → Σ (B a) (λ b → C (a , b))) ≃ Σ (Σ A B) C
+  Σ-assoc = (pull , is-eq pull push pull-push push-pull)
+    where
+      pull : Σ A (λ a → Σ (B a) (λ b → C (a , b))) → Σ (Σ A B) C
+      pull (a , (b , c)) = ((a , b) , c)
+
+      push : Σ (Σ A B) C → Σ A (λ a → Σ (B a) (λ b → C (a , b)))
+      push ((a , b) , c) = (a , (b , c))
+
+      pull-push : (w : Σ (Σ A B) C) → pull (push w) == w
+      pull-push ((a , b) , c) = idp
+
+      push-pull : (z : Σ A (λ a → Σ (B a) (λ b → C (a , b)))) → push (pull z) == z
+      push-pull (a , (b , c)) = idp
+
+-- 2.11. A (homotopy) commutative square
+-- P --h-> A
+-- |       |
+-- |k      |f
+-- ↓       ↓
+-- B --g-> C
+-- consists of functions f, g, h, and k as shown, together with a path f ◦ h = g ◦ k. Note that
+-- this is exactly an element of the pullback (P → A) ×_{P→C} (P → B) as defined in
+-- (2.15.11). A commutative square is called a (homotopy) pullback square if for any X, the
+-- induced map (X → P) → (X → A) ×_{X→C} (X → B) is an equivalence. Prove that the pullback P
+-- = A ×_C B defined in (2.15.11) is the corner of a pullback square.
+-- That is, P = A ×_C B = Σa:A. Σb:B. (f(a) = g(b)).
