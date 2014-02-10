@@ -6,11 +6,11 @@ open import HoTT public
 -- 1.1. Given functions f : A → B and g : B → C, define their composite g ◦ f : A → C.
 -- Show that we have h ◦ ( g ◦ f ) ≡ ( h ◦ g ) ◦ f .
 
-∘-associative : {ℓ : ULevel} → {A B C D : Type ℓ} →
-                (f : A → B) → (g : B → C) → (h : C → D) →
-                h ∘ (g ∘ f) == (h ∘ g) ∘ f
+∘-assoc : {ℓ : ULevel} → {A B C D : Type ℓ} →
+          (f : A → B) → (g : B → C) → (h : C → D) →
+          h ∘ (g ∘ f) == (h ∘ g) ∘ f
 -- idp (refl) typechecks without any help; that means the equality is judgmental
-∘-associative f g h = idp
+∘-assoc f g h = idp
 
 -- 1.2. Derive the recursion principle for products rec A × B using only the projections, and
 -- verify that the definitional equalities are valid. Do the same for Σ-types.
