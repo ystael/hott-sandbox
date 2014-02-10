@@ -2,7 +2,7 @@
 module Exercises.Exercises2 where
 
 open import HoTT public
-open import exercises.Exercises1 using (ind-a==b)
+open import exercises.Exercises1 using (ind-a==b; ∘-assoc)
 
 -- 2.1. Show that the three obvious proofs of Lemma 2.1.2 are pairwise equal.
 
@@ -228,9 +228,10 @@ module _ {i} (A B X : Type i) where
 
 module _ {i} (A B : Type i) (C : A → Type i) (D : B → Type i) where
 
-  E : Coprod A B → Type i
-  E (inl a) = C a
-  E (inr b) = D b
+  private
+    E : Coprod A B → Type i
+    E (inl a) = C a
+    E (inr b) = D b
 
   coprod-univ-dep : ((ab : Coprod A B) → E ab) ≃ (((a : A) → C a) × ((b : B) → D b))
   coprod-univ-dep = (split , is-eq split combine split-combine combine-split)
@@ -293,3 +294,109 @@ module _ {i} (A : Type i) (B : A → Type i) (C : Σ A B → Type i) where
 -- induced map (X → P) → (X → A) ×_{X→C} (X → B) is an equivalence. Prove that the pullback P
 -- = A ×_C B defined in (2.15.11) is the corner of a pullback square.
 -- That is, P = A ×_C B = Σa:A. Σb:B. (f(a) = g(b)).
+
+-- The problem here is to prove (1) that the type Σa:A. Σb:B. (f(a) = g(b)) (together with the
+-- obvious projections onto A and B serving as h and k) yields a commutative square; and (2)
+-- that this type has the claimed universal property, that is, that any cone over the diagram
+-- A -f-> C <-g- B (pair of maps α : X → A, β : X → B such that fα = gβ) factors uniquely
+-- through P (so that maps X → P are equivalent to these cones, which are clearly classified by
+-- Σα:X→A. Σβ:X→B. (fα = gβ)).
+
+-- General definitions for commutative squares and pullbacks
+record Square {i} (A B C D : Type i) : Type i where
+  constructor □
+  field
+    -- order: top left right bottom
+    f : A → B
+    g : A → C
+    h : B → D
+    k : C → D
+    commutes : h ∘ f == k ∘ g
+
+is-pullback : ∀ {i} {A B C D : Type i} → Square A B C D → Type (lsucc i)
+is-pullback {i} {A} {B} {C} {D} (□ f g h k commutes) =
+  (X : Type i) → (X → A) ≃ Σ (X → B) (λ β → Σ (X → C) (λ γ → h ∘ β == k ∘ γ))
+
+PullbackSquare : ∀ {i} (A B C D : Type i) → Type (lsucc i)
+PullbackSquare A B C D = Σ (Square A B C D) is-pullback
+
+module Ex2-11 {i} (A B C : Type i) (f : A → C) (g : B → C) where
+
+  P : Type i
+  P = Σ A (λ a → Σ B (λ b → f a == g b))
+  -- Projections
+  h : P → A
+  h = fst
+  k : P → B
+  k = fst ∘ snd
+  commutes-ext : (p : P) → f (h p) == g (k p)
+  commutes-ext = snd ∘ snd
+
+  square : Square P A B C
+  square = □ h k f g (λ= commutes-ext)
+
+  pullback-square : PullbackSquare P A B C
+  pullback-square = (square , P-is-pullback)
+    where
+      P-is-pullback : is-pullback square
+      P-is-pullback X = (split , is-eq split combine split-combine combine-split)
+        where
+          split : (X → P) → Σ (X → A) (λ α → Σ (X → B) (λ β → f ∘ α == g ∘ β))
+          split π = (h ∘ π , (k ∘ π , λ= (commutes-ext ∘ π)))
+
+          combine : Σ (X → A) (λ α → Σ (X → B) (λ β → f ∘ α == g ∘ β)) → (X → P)
+          combine (α , (β , ϑ)) x = (α x , (β x , app= ϑ x))
+
+          split-combine : (ω : Σ (X → A) (λ α → Σ (X → B) (λ β → f ∘ α == g ∘ β))) →
+                          split (combine ω) == ω
+          split-combine (α , (β , ϑ)) = pair= idp (pair= idp (! (λ=-η ϑ)))
+
+          combine-split : (π : X → P) → combine (split π) == π
+          combine-split π = λ= combine-split-ext
+            where
+              combine-split-ext : (x : X) → combine (split π) x == π x
+              combine-split-ext x = pair= idp (pair= idp (app=-β (commutes-ext ∘ π) x))
+
+-- 2.12. Suppose given two commutative squares
+-- A → C → E
+-- ↓   ↓   ↓
+-- B → D → F
+-- and suppose that the right-hand square is a pullback square. Prove that the left-hand square
+-- is a pullback square if and only if the outer rectangle is a pullback square.
+
+module Ex2-12 {i} {A B C D E F : Type i}
+              (L : Square A C B D) (RP : PullbackSquare C E D F)
+              (shared : Square.h L == Square.g (fst RP)) where
+  open Square
+
+  R : Square C E D F
+  R = fst RP
+
+  outer : Square A E B F
+  outer = □ (f R ∘ f L) (g L) (h R) (k R ∘ k L) outer-commutes
+    where
+      outer-commutes : (h R) ∘ (f R) ∘ (f L) == (k R) ∘ (k L) ∘ (g L)
+      outer-commutes = h R ∘ f R ∘ f L =⟨ commutes R |in-ctx (λ φ → φ ∘ f L) ⟩
+                       k R ∘ g R ∘ f L =⟨ ! shared   |in-ctx (λ φ → k R ∘ φ ∘ f L) ⟩
+                       k R ∘ h L ∘ f L =⟨ commutes L |in-ctx (λ φ → k R ∘ φ) ⟩
+                       k R ∘ k L ∘ g L ∎
+
+  left→outer : is-pullback L → is-pullback outer
+  left→outer Lpb X = split , is-eq split combine split-combine combine-split
+    where
+      split : (X → A) → Σ (X → E) (λ ε → Σ (X → B) (λ β → h outer ∘ ε == k outer ∘ β))
+      split π = (f R ∘ f L ∘ π , (g L ∘ π , λ= {!!}))
+
+      combine : Σ (X → E) (λ ε → Σ (X → B) (λ β → h outer ∘ ε == k outer ∘ β)) → X → A
+      combine (ε , (β , ϑ)) = {!!}
+
+      split-combine : (ω : Σ (X → E) (λ ε → Σ (X → B) (λ β → h outer ∘ ε == k outer ∘ β))) →
+                      split (combine ω) == ω
+      split-combine (ε , (β , ϑ)) = {!!}
+
+      combine-split : (π : X → A) → combine (split π) == π
+      combine-split π = {!!}
+
+  left←outer : is-pullback outer → is-pullback L
+  left←outer Opb X = {!!} , is-eq {!!} {!!} {!!} {!!}
+
