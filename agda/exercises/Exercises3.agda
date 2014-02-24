@@ -131,8 +131,7 @@ module _ {i} where
                             Π X (λ x → ∥ Y x ∥) → Π X Y
       untruncated-version LEM X Y Xset Yset mere-section x with LEM (Y x)
       ... | inl y  = y
-      -- Not sure why this ends with unresolved metas
-      ... | inr ¬y = ⊥-elim (mere-contr-elim (mere-section x) ¬y)
+      ... | inr ¬y = ⊥-rec (mere-contr-elim (mere-section x) ¬y)
 
 -- 3.14. Show that assuming LEM, the double negation ¬¬A has the same universal property as the
 -- propositional truncation ∥A∥, and is therefore equivalent to it. Thus, under LEM, the
