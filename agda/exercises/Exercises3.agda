@@ -97,3 +97,62 @@ contr-→-gives-prop _ (g , g=) =
 
 -- 3.5. Show that isProp(A) ≃ (A → isContr(A)).
 
+-- 3.13. We showed in Corollary 3.2.7 that the following naive form of LEM is inconsistent with
+-- univalence: Π(A:U). A + (¬A).  In the absence of univalence, this axiom is
+-- consistent. However, show that it implies the axiom of choice (3.8.1).
+
+module _ {i} where
+
+  -- Just notation
+  ∥_∥ : Type i → Type i
+  ∥ A ∥ = Trunc ⟨-1⟩ A
+
+  -- This is the simplified equivalent form of the axiom of choice: if every member of a family
+  -- of types is merely inhabited, their dependent product is merely inhabited.
+  set-choice : Type (lsucc i)
+  set-choice = (X : Type i) → (Y : X → Type i) → is-set X → ((x : X) → is-set (Y x)) →
+               Π X (λ x → ∥ Y x ∥) → ∥ Π X Y ∥
+
+  -- Since 0 is a mere proposition, merely inhabiting a type we know is empty yields empty.
+  mere-contr-elim : {A : Type i} → ∥ A ∥ → ¬ A → ⊥
+  mere-contr-elim ∥a∥ = Trunc-rec (Π-is-prop (λ _ → ⊥-is-prop)) (λ a ¬a → ¬a a) ∥a∥
+
+  -- The idea here is: Given x : X, lem (Y x) lives in (Y x) + ¬ (Y x), so we can match on it.
+  -- If we have Y x, that is the corresponding point of Π X Y.  If we have ¬ (Y x), we can lift
+  -- mere-section x from ∥ Y x ∥ to Y x and apply it to get 0, from which we get a point of Π X
+  -- Y.
+  strong-LEM→set-choice : Π (Type i) (λ A → Coprod A (¬ A)) → set-choice
+  strong-LEM→set-choice LEM X Y Xset Yset mere-section =
+    [ untruncated-version LEM X Y Xset Yset mere-section ]
+    where
+      untruncated-version : Π (Type i) (λ A → Coprod A (¬ A)) →
+                            (X : Type i) → (Y : X → Type i) →
+                            is-set X → ((x : X) → is-set (Y x)) →
+                            Π X (λ x → ∥ Y x ∥) → Π X Y
+      untruncated-version LEM X Y Xset Yset mere-section x with LEM (Y x)
+      ... | inl y  = y
+      -- Not sure why this ends with unresolved metas
+      ... | inr ¬y = ⊥-elim (mere-contr-elim (mere-section x) ¬y)
+
+-- 3.14. Show that assuming LEM, the double negation ¬¬A has the same universal property as the
+-- propositional truncation ∥A∥, and is therefore equivalent to it. Thus, under LEM, the
+-- propositional truncation can be defined rather than taken as a separate type former.
+
+module _ {i} where
+
+  LEM : Type (lsucc i)
+  LEM = Π (Type i) (λ A → is-prop A → Coprod A (¬ A))
+
+  module _ {lem : LEM} where
+    ¬¬-is-prop : (A : Type i) → is-prop (¬ (¬ A))
+    ¬¬-is-prop A = Π-is-prop (λ _ → ⊥-is-prop)
+
+    -- Truncation of an element into the truncated type
+    ¬¬ : {A : Type i} → A → ¬ (¬ A)
+    ¬¬ a ¬a = ¬a a
+ 
+    -- Universal property of truncation
+    ¬¬-is-trunc : {A B : Type i} → is-prop B → (f : A → B) → (¬ (¬ A) → B)
+    ¬¬-is-trunc {A} {B} Bprop f with lem B Bprop
+    ... | inl b  = λ _ → b
+    ... | inr ¬b = (λ ¬¬a → ⊥-elim (¬¬a (¬b ∘ f)))
