@@ -106,7 +106,39 @@ module _ {i} {A B C D : Type i} (f : A → B) (g : B → C) (h : C → D)
   is-eq-2/6 = record {hgf-equiv = equiv-2/6-hgf; h-equiv = equiv-2/6-h;
                       g-equiv   = equiv-2/6-g;   f-equiv = equiv-2/6-f}
 
+-- This needs functional extensionality somewhere, I think ... to prove that
+-- idf ∘ idf == idf if nothing else
+ap-idf-is-equiv : ∀ {i} {A : Type i} (x y : A) → is-equiv (ap (idf A) {x = x} {y = y})
+ap-idf-is-equiv x y = transport is-equiv (! (λ= ap-idf)) (idf-is-equiv (x == y))
+
+-- A function which is extensionally equal to the identity is also an equivalence when
+-- you ap it ... this is just ap-idf-is-equiv transported through the extensional equality
+ap-like-idf-is-equiv : ∀ {i} {A : Type i} {f : A → A} → ((a : A) → f a == a) → (x y : A) →
+                       is-equiv (ap f {x = x} {y = y})
+ap-like-idf-is-equiv f-ext-id x y =
+  transport (λ f → is-equiv (ap f {x = x} {y = y})) (! (λ= f-ext-id)) (ap-idf-is-equiv x y)
+
+-- The idea of this alternative proof of 2.11.1 is to let the three functions be forward,
+-- back, forward through e, and observe that forward-back and back-forward are essentially
+-- ap idf, so the 2/6 lemma applies.  We just have to do a bit of work to get there.
 equiv-ap′ : ∀ {i} {A B : Type i} (e : A ≃ B) →
             (x y : A) → is-equiv (ap (–> e) {x} {y})
-equiv-ap′ e x y = equiv-2/6.g-equiv {!!} (ap (–> e)) (ap (<– e)) {!!} {!!}
-                   (is-eq-2/6 {!!} (ap (–> e)) (ap (<– e)) {!!} {!!})
+equiv-ap′ {_} {A} {B} e x y =
+  equiv-2/6.f-equiv f g h gf-equiv hg-equiv (is-eq-2/6 f g h gf-equiv hg-equiv)
+  where
+    f : x == y → –> e x == –> e y
+    f = ap (–> e)
+
+    g : –> e x == –> e y → <– e (–> e x) == <– e (–> e y)
+    g = ap (<– e)
+
+    h : <– e (–> e x) == <– e (–> e y) → –> e (<– e (–> e x)) == –> e (<– e (–> e y))
+    h = ap (–> e)
+
+    gf-equiv : is-equiv (g ∘ f)
+    gf-equiv = transport is-equiv (λ= (ap-∘ (<– e) (–> e)))
+                         (ap-like-idf-is-equiv (<–-inv-l e) x y)
+
+    hg-equiv : is-equiv (h ∘ g)
+    hg-equiv = transport is-equiv (λ= (ap-∘ (–> e) (<– e)))
+                         (ap-like-idf-is-equiv (<–-inv-r e) (–> e x) (–> e y))
