@@ -1,0 +1,32 @@
+7.1. (a) If Π A:U. ∥A∥ → A, then in particular for any A and x, y: A,
+we have ∥x = y∥ → (x = y).  Thus we can get a reflexive mere relation
+implying identity: for any type A, define R(x, y) = ∥x = y∥, then R is
+a mere relation and R(x, x) is inhabited by ∣refl_x∣, and the function
+∥x = y∥ → (x = y) is the identity implication.  By 7.2.2 A is a set.
+
+(b) (1) If f: A → 1 then fib_f(⋆) ≃ A, because fib_f(⋆) = Σ x:A. f(x) = ⋆,
+and 1 is contractible, so ⋆ = ⋆ is contractible so fib_f(⋆) ≃
+Σ x:A. 1 ≃ A.
+(2) 1 → A ≃ A, the forward direction being "apply ⋆" and the back
+direction being "constant function by induction on 1".  One equivalence
+homotopy is definitional, the other is functional extensionality.
+(3) Thus if every mere surjection splits, that is, if for any f: A → B
+we have Π b:B. ∥fib_f(b)∥ → Π b:B. fib_f(b), then in particular this
+is true when B = 1.  Then given any type A we can form a map ∥A∥ → A
+as follows: let c: A → 1 be the constant function c(a) = ⋆, then send
+∥A∥ → ∥fib_c(⋆)∥ [truncation induction on equivalence 1] →
+Π b:1. ∥fib_c(b)∥ [2] → Π b:1. fib_c(b) [assumption] → fib_c(⋆) [2] →
+A [1].  Now the hypothesis of (a) is satisfied, so all types are sets.
+
+7.2. The diagram should look like
+   1 → 1 → 1
+    ↘↗ ↘↗
+    ↗↘ ↗↘
+   1 → 1 → 1
+based on the conjecture: If D is a diagram with homotopy colimit A
+(that is, for any type E, cocone_D(E) ≃ A → E), then the extended
+diagram D′ :≡ 1 ⇚ D ⇛ 1 (that is, arrows from every object of D
+to each copy of 1) has homotopy colimit ΣA (that is, for any type E,
+cocone_D′(E) ≃ ΣA → E).  Given that, and the fact that we know the
+diagram 1 1 has colimit S⁰, adding another pair of 1's below (to the
+right) should give ΣS⁰ ≃ S¹, and a third pair should give ΣS¹ ≃ S².
