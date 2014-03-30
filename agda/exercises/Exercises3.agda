@@ -78,7 +78,7 @@ module _ {i} (A B : Type i) (Aset : is-set A) (Bset : is-set B) where
   where
     =Σ-prop : is-prop (=Σ (a₁ , b₁) (a₂ , b₂))
     =Σ-prop = Σ-preserves-prop (a₁ == a₂)   (λ p → b₁ == b₂ [ B ↓ p ])
-                               (Aset a₁ a₂) (λ p → =-[-↓-]-level Bset)
+                               (Aset a₁ a₂) (λ p → ↓-level Bset)
 
     path-space-is-prop : is-prop ((a₁ , b₁) == (a₂ , b₂))
     path-space-is-prop = equiv-preserves-level (=Σ-eqv (a₁ , b₁) (a₂ , b₂)) =Σ-prop

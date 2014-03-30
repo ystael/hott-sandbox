@@ -267,8 +267,8 @@ module _ {i} (A B : Type i) (C : A → Type i) (D : B → Type i) where
 
 module _ {i} (A : Type i) (B : A → Type i) (C : Σ A B → Type i) where
 
-  Σ-assoc : Σ A (λ a → Σ (B a) (λ b → C (a , b))) ≃ Σ (Σ A B) C
-  Σ-assoc = (pull , is-eq pull push pull-push push-pull)
+  Σ-assoc′ : Σ A (λ a → Σ (B a) (λ b → C (a , b))) ≃ Σ (Σ A B) C
+  Σ-assoc′ = (pull , is-eq pull push pull-push push-pull)
     where
       pull : Σ A (λ a → Σ (B a) (λ b → C (a , b))) → Σ (Σ A B) C
       pull (a , (b , c)) = ((a , b) , c)
